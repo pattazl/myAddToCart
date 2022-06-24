@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         myAddToCart
 // @namespace    http://huaqin.com/
-// @version      0.7
+// @version      0.8
 // @description  方便抢购
 // @author       Austin
 // @match        http://shop.huaqin.com/*
@@ -18,7 +18,7 @@
     // 添加数量输入框
     var isList = attachControlPanel();
     // 有商品清单展示
-    if(isList)
+    if(isList || location.href.indexOf('goods.php?id=')>-1 )
     {
         var bAutoFind = false ;// 自动查找开关
         var objArr = document.getElementsByClassName("goodsName");
@@ -56,14 +56,20 @@
 			'<form action="flow.php" target="_blank" method="post" name="theForm" id="theForm"><input name="shipping" type="radio" value="9" checked="true" supportcod="1" insure="0" ><input name="need_insure" id="ECS_NEEDINSURE" type="checkbox"  value="1" disabled="true"><input type="radio" name="payment" value="4" checked="" iscod="0" onclick="selectPayment(this)"><input type="hidden" name="step" value="done"></form>'; // 提交的单子
             document.body.appendChild(oForm);
         }
+        // 单独购买商品处添加按钮
+        if(location.href.indexOf('goods.php?id=')>-1)
+        {
+            var html2 = document.querySelector('.padd').innerHTML;
+            document.querySelector('.padd').innerHTML = html2 + html2.replace('<img src=\"themes/ecmoban_jingdong/images/goumai2.gif\">','直接提交订单');
+        }
        // 添加自定义函数
         addSelfFuns();
         // 修改打开页面为新页面
         var str = addToCartResponse.toString();
         str = str.replace("function addToCartResponse(result)", "window.addToCartResponse = function (result)");
-        str = str.replace(/if \(result.error == 2\)\s*\{\s*if \(confirm\(result\.message\)\)/g, " if(result.error == 2){console.warn(result);if (0)"); // 去掉弹框提示
+        str = str.replace(/if \(result.error == 2\)\s*\{\s*if \(confirm\(result\.message\)\)/g, " if(result.error > 0){console.warn(result);document.title=result.goods_id+'|'+result.message;if (0)"); // 去掉弹框提示
         str = str.replace(/location\.href\s*=(.*);/ig, 'window.myOpen($1,"_blank");');
-        str = str.replace("var cartInfo = document.getElementById", "if(global_arr!=null){global_arr[global_arr.indexOf(~~result.goods_id)]=0;};var cartInfo = document.getElementById"); // 已经成功购买，可以从全局数组移走
+        str = str.replace("var cartInfo = document.getElementById", "if(typeof global_arr !='undefined'){global_count++;};var cartInfo = document.getElementById"); // 已经成功购买，可以计数
         //str = str.replace("if (result.error > 0)", "result.error=2;debugger;if (result.error > 0)");
         //console.log(str);
         eval(str);
@@ -281,10 +287,19 @@ function autoFindAndSubmit()
 
 /*
   // 手工抢商品清单 控制台执行
+  var global_count =0,global_handle=null;
   var global_arr = [910,911,912,913,914,915, 920,921,922, 960,959,958,956];
   function autoAddMyList()
   {
     console.log('autoAddMyList@'+new Date());
+    // 如果购买多次需要停止
+    if(global_count>global_arr.length)
+    {
+       clearInterval(global_handle);
+       global_handle = null;
+       console.log('autoAddMyList Stopped@'+new Date());
+       return;
+    }
 	for(var i=0;i<global_arr.length;i++)
 	{
 		if(global_arr[i]>0)
@@ -294,5 +309,6 @@ function autoFindAndSubmit()
 	}
   }
   autoAddMyList();
-  setInterval( autoAddMyList,20000);// 20秒执行一次
+  global_handle = setInterval( autoAddMyList,30000);// 30秒执行一次
+  function alert(s){document.title = s;console.error(s);}; // 替换alert 防止阻塞
 */
