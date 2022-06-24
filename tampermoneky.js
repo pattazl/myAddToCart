@@ -1,7 +1,8 @@
+/* eslint-disable no-undef */
 // ==UserScript==
 // @name         myAddToCart
 // @namespace    http://huaqin.com/
-// @version      0.10
+// @version      0.11
 // @description  方便抢购
 // @author       Austin
 // @match        http://shop.huaqin.com/*
@@ -28,6 +29,7 @@
            // 判断是否需要自动刷新,地址不同不同参数,没找到需要继续刷新
            if( bReloading )
            {
+               // eslint-disable-next-line no-undef
                startReload();
            }
         }else
@@ -60,11 +62,12 @@
         if(location.href.indexOf('goods.php?id=')>-1)
         {
             var html2 = document.querySelector('.padd').innerHTML;
-            document.querySelector('.padd').innerHTML = html2 + html2.replace('<img src=\"themes/ecmoban_jingdong/images/goumai2.gif\">','直接提交订单');
+            document.querySelector('.padd').innerHTML = html2 + html2.replace('<img src="themes/ecmoban_jingdong/images/goumai2.gif">','直接提交订单');
         }
        // 添加自定义函数
         addSelfFuns();
         // 修改打开页面为新页面
+        // eslint-disable-next-line no-undef
         var str = addToCartResponse.toString();
         str = str.replace("function addToCartResponse(result)", "window.addToCartResponse = function (result)");
         str = str.replace(/if \(result.error == 2\)\s*\{\s*if \(confirm\(result\.message\)\)/g, " if(result.error > 0){console.warn(result);document.title=result.goods_id+'|'+result.message;if (0)"); // 去掉弹框提示
@@ -155,7 +158,7 @@ function attachControlPanel()
 		d.setMinutes($('idMin').value);
 		d.setSeconds($('idSec').value);
         $('countLeft').innerHTML = window.countNum;
-        if(window.countNum<1 && (new Date()>d)){location.reload();};
+        if(window.countNum<1 && (new Date()>d)){location.reload();}
         window.countNum = window.countNum -1;
     };
     window.startReload = function()
@@ -216,14 +219,18 @@ function attachControlPanel()
 function addSelfFuns()
 {
         // 增加 _addToCart 函数
-        window._addToCart = function(n,id)
+        window._addToCart = function(n,id,realNum)
         {
             // 取数量
             var obj = $("selfCount"+n);
             var num = 1; // 默认数量1
-            if(obj1=null)
+            if(obj!=null)
             {
                 num = $("selfCount"+n).value;
+            }
+            if(typeof realNum =='number')
+            {
+                num = realNum;
             }
             document.forms['ECS_FORMBUY'].elements["number"].value= num;
             addToCart(id); // 调用原先函数
