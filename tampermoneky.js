@@ -2,11 +2,12 @@
 // ==UserScript==
 // @name         myAddToCart
 // @namespace    http://huaqin.com/
-// @version      0.11
+// @version      0.12
 // @description  方便抢购
 // @author       Austin
 // @match        http://shop.huaqin.com/*
 // @grant        none
+// @license      MIT
 // ==/UserScript==
 // 原系统已经定义 document.getElementById 为$
 
@@ -14,8 +15,16 @@
 
 (function() {
     'use strict';
-    //window.autoSubmit = true; // 是否直接 提交订单
-    //window.directCheckout = true; // 是否略过购物车，直接到提交订单
+    window.initGlobalVar = function initGlobalVar()
+    {
+        // 初始化参数，是否直接 提交订单
+        window.autoSubmit = (localStorage.getItem('AutoSubmit')||1)==1?true:false;
+        // 初始化参数，是否略过购物车，直接到提交订单
+        window.directCheckout = (localStorage.getItem('DirectCheckout')||1)==1?true:false;
+        let regArrJSON = localStorage.getItem('searchInfo')||'[]';
+        window.searchArr = JSON.parse(regArrJSON);
+    }
+    window.initGlobalVar();
     // 添加数量输入框
     var isList = attachControlPanel();
     // 有商品清单展示
@@ -54,7 +63,14 @@
         if( document.forms['ECS_FORMBUY'] === undefined)
         {
             var oForm = document.createElement("div");
-            oForm.innerHTML = '<form name="ECS_FORMBUY" id="ECS_FORMBUY"><input name="number" type="text" id="number" value="1" /></form>'+  //模拟数量
+            oForm.innerHTML = '<form name="ECS_FORMBUY" id="ECS_FORMBUY"><input name="number" type="text" id="number" value="1" /></form>';//模拟数量
+            document.body.appendChild(oForm);
+        }
+        // 添加theForm对象
+        if( document.forms['theForm'] === undefined)
+        {
+            var oForm = document.createElement("div");
+            oForm.innerHTML = 
 			'<form action="flow.php" target="_blank" method="post" name="theForm" id="theForm"><input name="shipping" type="radio" value="9" checked="true" supportcod="1" insure="0" ><input name="need_insure" id="ECS_NEEDINSURE" type="checkbox"  value="1" disabled="true"><input type="radio" name="payment" value="4" checked="" iscod="0" onclick="selectPayment(this)"><input type="hidden" name="step" value="done"></form>'; // 提交的单子
             document.body.appendChild(oForm);
         }
@@ -62,7 +78,8 @@
         if(location.href.indexOf('goods.php?id=')>-1)
         {
             var html2 = document.querySelector('.padd').innerHTML;
-            document.querySelector('.padd').innerHTML = html2 + html2.replace('<img src="themes/ecmoban_jingdong/images/goumai2.gif">','直接提交订单');
+            var strStaus= (autoSubmit?'直接提交订单':' ')+ (directCheckout?'直接到订单(略过购物车)':' ')
+            document.querySelector('.padd').innerHTML = html2.replace('<img src="themes/ecmoban_jingdong/images/goumai2.gif">','<div class="shop">'+strStaus+'</div>')+' 提交方式可在分类模块的文字模式中设置'
         }
        // 添加自定义函数
         addSelfFuns();
@@ -134,12 +151,9 @@ function attachControlPanel()
     $('idHour').value = localStorage.getItem('iHour')||0;
     $('idMin').value = localStorage.getItem('iMin')||0;
     $('idSec').value = localStorage.getItem('iSec')||0;
-    autoSubmit = (localStorage.getItem('AutoSubmit')||1)==1?true:false;
-    directCheckout = (localStorage.getItem('DirectCheckout')||1)==1?true:false;
     $('ckAutoSubmit').checked = autoSubmit;
     $('ckDirectCheckout').checked = directCheckout;
-    let regArrJSON = localStorage.getItem('searchInfo')||'[]';
-    searchArr = JSON.parse(regArrJSON);
+
     for( var i=0;i<10;i++)
     {
         let obj = $('autoGoodsName'+(i+1));
@@ -243,15 +257,19 @@ function addSelfFuns()
             {
                 url = 'flow.php?step=checkout';
             }
+            // 提交订单页面
             if( autoSubmit )
             {
+                // 有提交模块
+                if(document.forms.theForm!=null){
                 //console.log("autoCommit theForm.submit");
 				// 需要防止重复提交，用定时器
 				if( window.handleSubmit != null ){clearInterval(window.handleSubmit);window.handleSubmit=null;}
                 window.handleSubmit = setTimeout( function(){document.forms.theForm.submit();},1);
-            }else{
-                window.open(url , win);
+                return
+                }
             }
+            window.open(url , win);
         };
 }
 function autoFindAndSubmit()
@@ -297,40 +315,43 @@ function autoFindAndSubmit()
     console.log( goodsArr );
 }
 
+
+// 手工抢商品清单 控制台执行
+/* eslint-disable no-undef */
+// 步骤: 1. 安装 myAddToCart_v0.10 插件(替换系统函数) 2. 打开分类页面如 http://shop.huaqin.com/category.php?id=32 3. 选择显示方式“文字” 4.显示控件配置后，勾选“在商品清单页面直接提交订单” 5.设置页面允许打开新窗口 6. 控制台执行,手工抢商品清单脚本
 /*
-  // 手工抢商品清单 控制台执行
-  var global_count =0,global_handle=null;
-  var global_arr = [910,911,912,913,914,915, 920,921,922, 960,959,958,956];
-  function autoAddMyList()
-  {
-    console.log('autoAddMyList@'+new Date());
+var global_count = 0, global_handle = null;
+var global_arr = [1200]; //默认抢购商品的ID清单，多个商品时，有时提交会进行合并
+var priceList = { '1200': 1 }  // 指定 ID抢购的数量，不填默认为1
+var countingMS = 3 * 1000; // 3秒执行一次
+function autoAddMyList() {
+    console.log('autoAddMyList@' + new Date());
     // 如果购买多次需要停止
-    if(global_count>global_arr.length)
-    {
-       clearInterval(global_handle);
-       global_handle = null;
-       console.log('autoAddMyList Stopped@'+new Date());
-       return;
+    if (global_count >= global_arr.length) {
+        clearInterval(global_handle);
+        global_handle = null;
+        console.log('autoAddMyList Stopped@' + new Date());
+        return;
     }
-    for(var i=0;i<global_arr.length;i++)
-    {
-        if(global_arr[i]>0)
-        {
-            setTimeout( function(id){ _addToCart(0,id) }(global_arr[i]),100*i); //
+    for (var i = 0; i < global_arr.length; i++) {
+        if (global_arr[i] > 0) {
+            setTimeout(function (id) {
+                let num = priceList[id] == null ? 1 : priceList[id];
+                _addToCart(0, id, num);
+            }(global_arr[i]), 100 * i); //
         }
     }
-  }
-  autoAddMyList(); // 第一次试运行
-  var intervalTime = 500, countingMS = 30*1000,countingNum=0;// 30秒执行一次
-  global_handle = setInterval( function(){
-    var leftTime = (countingMS - countingNum*intervalTime)/1000;
-    document.title = leftTime+' 已抢:'+global_count;
+}
+autoAddMyList(); // 第一次试运行
+var intervalTime = 500, countingNum = 0;// 每个商品的间隔0.5秒
+global_handle = setInterval(function () {
+    var leftTime = (countingMS - countingNum * intervalTime) / 1000;
+    document.title = leftTime + ' 已抢:' + global_count;
     countingNum++;
-    if( leftTime <= 0)
-    {
-      autoAddMyList();
-      countingNum =0;
+    if (leftTime <= 0) {
+        autoAddMyList();
+        countingNum = 0;
     }
-  },intervalTime);// 30秒执行一次
-  function alert(s){console.error('alert:'+s);}; // 替换alert 防止阻塞
+}, intervalTime);// 执行探测轮询
+function alert(s) { console.error('alert:' + s); } // 替换alert 防止阻塞
 */
