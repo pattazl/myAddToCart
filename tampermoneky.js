@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         myAddToCart
 // @namespace    http://huaqin.com/
-// @version      0.4
+// @version      0.7
 // @description  方便抢购
 // @author       Austin
 // @match        http://shop.huaqin.com/*
-// @grant    none
+// @grant        none
 // ==/UserScript==
 // 原系统已经定义 document.getElementById 为$
 
@@ -61,7 +61,9 @@
         // 修改打开页面为新页面
         var str = addToCartResponse.toString();
         str = str.replace("function addToCartResponse(result)", "window.addToCartResponse = function (result)");
+        str = str.replace(/if \(result.error == 2\)\s*\{\s*if \(confirm\(result\.message\)\)/g, " if(result.error == 2){console.warn(result);if (0)"); // 去掉弹框提示
         str = str.replace(/location\.href\s*=(.*);/ig, 'window.myOpen($1,"_blank");');
+        str = str.replace("var cartInfo = document.getElementById", "if(global_arr!=null){global_arr[global_arr.indexOf(~~result.goods_id)]=0;};var cartInfo = document.getElementById"); // 已经成功购买，可以从全局数组移走
         //str = str.replace("if (result.error > 0)", "result.error=2;debugger;if (result.error > 0)");
         //console.log(str);
         eval(str);
@@ -228,7 +230,7 @@ function addSelfFuns()
                 //console.log("autoCommit theForm.submit");
 				// 需要防止重复提交，用定时器
 				if( window.handleSubmit != null ){clearInterval(window.handleSubmit);window.handleSubmit=null;}
-                window.handleSubmit = setTimeout( function(){document.forms.theForm.submit();},1); 
+                window.handleSubmit = setTimeout( function(){document.forms.theForm.submit();},1);
             }else{
                 window.open(url , win);
             }
@@ -269,5 +271,28 @@ function autoFindAndSubmit()
             return true;
         });
     });
+    if($('txtBought').value==='')
+    {
+        //没有匹配到需要的商品，可以自动自动刷新
+        startReload();
+    }
     console.log( goodsArr );
 }
+
+/*
+  // 手工抢商品清单 控制台执行
+  var global_arr = [910,911,912,913,914,915, 920,921,922, 960,959,958,956];
+  function autoAddMyList()
+  {
+    console.log('autoAddMyList@'+new Date());
+	for(var i=0;i<global_arr.length;i++)
+	{
+		if(global_arr[i]>0)
+		{
+			setTimeout( function(id){ _addToCart(0,id) }(global_arr[i]),100*i); //
+		}
+	}
+  }
+  autoAddMyList();
+  setInterval( autoAddMyList,20000);// 20秒执行一次
+*/
