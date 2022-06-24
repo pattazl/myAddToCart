@@ -1,2 +1,30 @@
 # myAddToCart
-the tampermonkey script for ECSHOP v2.7.3
+The tampermonkey script for ECSHOP v2.7.3
+
+油猴脚本，用于基于 ECSHOP v2.7.3 的商品抢购
+
+使用方法:
+
+默认域名为  shop.huaqin.com 可以根据需要修改为自己的网址
+
+1. 首先安装油猴(tampermonkey) ，推荐使用edge/火狐，谷歌浏览器的插件市场无法直接访问
+安装方法：浏览器右上角菜单 -> 扩展 -> 搜索 tampermonkey -> 安装
+2. 安装后打开导航栏上的新扩展，管理面板->添加，用记事本打开myAddToCart文件，复制所有内容，保存
+3. 到 http://shop.huaqin.com/category.php?id=32 这种分类页面，选择 显示方式 “文字”
+4. 在左上角出现控制按钮，勾选“在商品清单页面直接提交订单”，实现购买后自动提交
+5. 需要设置页面允许打开新窗口，方法：点击地址栏输入框前的图标->允许弹框
+
+如果需要抢漏或提前抢购，操作方法如下:
+A. 首先确保安装了插件，实现购买自动提交，设置页面允许打开新窗口
+B. 记录自己需要抢购商品的ID，点击商品后地址栏上的id=后面的数字
+C. 修改抢漏脚本的第二行 var global_arr = [商品ID清单] ，其中多个商品ID清单用逗号分割
+D. 按F12打开调试模式 -> 控制台 ，将修改后商品ID清单的整个脚本复制到控制台，回车
+E. 可以在标题栏看脚本抢购的倒计时和已经抢到的数量
+
+注意：如果是第一次使用和购买，请首先需要填写寄的地址，送货方式等
+
+《商品探测.html》可用于探查商品ID
+
+《控制台执行，捡漏.js》用于探查到ID后的抢购
+
+《tampermoneky.js》为脚本，可从 https://greasyfork.org/zh-CN/scripts/446864-myaddtocart 下载安装

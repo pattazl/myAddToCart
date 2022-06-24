@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <title> 商品探查 </title>
+  <meta name="Generator" content="NPP-Plugin">
+  <meta name="Author" content="">
+  <meta name="Keywords" content="">
+  <meta name="Description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+ </head>
+ <body>
+  <script type="text/javascript">
+  window.onload = function()
+  {
+    setInterval(function(){
+        try{
+        if(showPage.contentWindow!=null)
+        {
+            
+            realPage.value = showPage.contentWindow.location.href
+        }else{
+            realPage.value = showPage.location.href
+        }
+        }catch(e)
+        {
+            realPage.value =  '异常，可能因跨域无法获取真实地址'
+        }
+    },1000)
+  }
+    function toPage(step)
+    {
+        var url = currPage.value;
+        if(url=='')
+        {
+            url = startPage.value
+        }else
+        {
+            url = url.replace(/\?id=(\d+)/,function(a,b)
+            {
+                var num = parseInt( b ) + step;
+                return '?id='+num
+            })
+            
+        }
+        if(showPage.contentWindow!=null)
+        {
+            showPage.src = url
+        }else{
+            showPage.location = url
+        }
+        currPage.value = url
+    }
+  </script>
+ 起始地址<input size=50 value="http://shop.huaqin.com/goods.php?id=1169" id='startPage'>
+ <input type='button' value='上一个' onclick='toPage(-1)'> <input type='button' value='下一个' onclick='toPage(1)'>
+ <br/>
+ 目标地址<input size=50 id='currPage' placeholder='留空从起始位置开始'> 真实地址<input size=50 id='realPage' readonly>
+ <hr/>
+  <iframe width=1024 height=700 src="" id="showPage">
+    
+  </script>
+ </body>
+</html>
