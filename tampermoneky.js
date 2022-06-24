@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         myAddToCart
 // @namespace    http://huaqin.com/
-// @version      0.8
+// @version      0.9
 // @description  方便抢购
 // @author       Austin
 // @match        http://shop.huaqin.com/*
@@ -300,15 +300,25 @@ function autoFindAndSubmit()
        console.log('autoAddMyList Stopped@'+new Date());
        return;
     }
-	for(var i=0;i<global_arr.length;i++)
-	{
-		if(global_arr[i]>0)
-		{
-			setTimeout( function(id){ _addToCart(0,id) }(global_arr[i]),100*i); //
-		}
-	}
+    for(var i=0;i<global_arr.length;i++)
+    {
+        if(global_arr[i]>0)
+        {
+            setTimeout( function(id){ _addToCart(0,id) }(global_arr[i]),100*i); //
+        }
+    }
   }
-  autoAddMyList();
-  global_handle = setInterval( autoAddMyList,30000);// 30秒执行一次
-  function alert(s){document.title = s;console.error(s);}; // 替换alert 防止阻塞
+  autoAddMyList(); // 第一次试运行
+  var intervalTime = 500, countingMS = 30*1000,countingNum=0;// 30秒执行一次
+  global_handle = setInterval( function(){
+    var leftTime = (countingMS - countingNum*intervalTime)/1000;
+    document.title = leftTime+' 已抢:'+global_count;
+    countingNum++;
+    if( leftTime <= 0)
+    {
+      autoAddMyList();
+      countingNum =0;
+    }
+  },intervalTime);// 30秒执行一次
+  function alert(s){console.error('alert:'+s);}; // 替换alert 防止阻塞
 */
