@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         myAddToCart
 // @namespace    http://huaqin.com/
-// @version      0.9
+// @version      0.10
 // @description  方便抢购
 // @author       Austin
 // @match        http://shop.huaqin.com/*
@@ -219,7 +219,12 @@ function addSelfFuns()
         window._addToCart = function(n,id)
         {
             // 取数量
-            var num = $("selfCount"+n).value;
+            var obj = $("selfCount"+n);
+            var num = 1; // 默认数量1
+            if(obj1=null)
+            {
+                num = $("selfCount"+n).value;
+            }
             document.forms['ECS_FORMBUY'].elements["number"].value= num;
             addToCart(id); // 调用原先函数
         };
