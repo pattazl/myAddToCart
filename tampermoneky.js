@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         myAddToCart
 // @namespace    http://huaqin.com/
-// @version      0.3
+// @version      0.4
 // @description  方便抢购
 // @author       Austin
 // @match        http://shop.huaqin.com/*
@@ -88,7 +88,7 @@ function attachControlPanel()
     // 有商品清单页面,并且是文字展示
     var strControlHTML = `<div style="padding:2px;width:320px;opacity: 0.8;position:fixed;top:30px;left:2px;background-color:blue;color:white;">
         <div style="background-color:green;cursor:pointer;" onclick="var obj=$('myControl').style;;obj.display=(obj.display=='none'?'block':'none')">点击折叠配置</div>
-        <div style="height:300px;" id="myControl">
+        <div style="min-height:300px;" id="myControl">
 如果没有商品,自动刷新间隔<input type="number" id="numStartReload" style="width:30px" value="3" min="0">秒  刷新倒计时:<span id="countLeft">N/A</span>
 <br/>
 商品1正则表达式:<input type="text" id="autoGoodsName1" style="width:100px" value="" >
@@ -104,6 +104,7 @@ function attachControlPanel()
 商品4数量:<input type="number" id="autoGoodsNum4" style="width:40px" value="1" min="1">
 <br/>
 自动刷新和下单 <input id="btStartReload" type="button" onclick="startReload()" value='开始'/>
+自动下单的匹配清单:<textarea id="txtBought" rows="3" cols="35"></textarea>
 <hr/>
 跳转页数<input type="number" id="numPage" style="width:30px" value="2" min="2"><input id="btStartReload" type="button" onclick="openNextPage()" value='跳页'> <label>默认流程 <input id="" type="radio" name="myAutoOptions" onclick="chgOpt()"/></label> <br/>
 
@@ -122,7 +123,7 @@ function attachControlPanel()
     directCheckout = (localStorage.getItem('DirectCheckout')||1)==1?true:false;
     $('ckAutoSubmit').checked = autoSubmit;
     $('ckDirectCheckout').checked = directCheckout;
-    let regArrJSON = localStorage.getItem('searchInfo')||[];
+    let regArrJSON = localStorage.getItem('searchInfo')||'[]';
     searchArr = JSON.parse(regArrJSON);
     for( var i=0;i<10;i++)
     {
@@ -236,6 +237,7 @@ function autoFindAndSubmit()
         }
         goodsArr.push({'goodId':goodId,'txt':txt});
     }
+    $('txtBought').value = '';
     searchArr.forEach((item,index) =>
     {
         var re = new RegExp(item.strReg,'i');
@@ -244,6 +246,9 @@ function autoFindAndSubmit()
             // 判断找到匹配
             if( re.test( good.txt ) )
             {
+                // 去掉换行
+                let txt = good.txt.replace(/\n/g,'');
+                $('txtBought').value +='['+txt+'],'+item.num
                 document.forms['ECS_FORMBUY'].elements["number"].value= item.num;
                 addToCart(good.goodId); // 调用加入购物车
                 return false;
