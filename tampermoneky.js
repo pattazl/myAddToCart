@@ -73,7 +73,7 @@
         // 自动提交订单
         if( autoSubmit && document.forms.theForm !=null )
         {
-            console.log("init:"+autoSubmit)
+            console.log("init:"+autoSubmit);
             //document.forms.theForm.submit();
         }
     }
@@ -89,7 +89,8 @@ function attachControlPanel()
     var strControlHTML = `<div style="padding:2px;width:320px;opacity: 0.8;position:fixed;top:30px;left:2px;background-color:blue;color:white;">
         <div style="background-color:green;cursor:pointer;" onclick="var obj=$('myControl').style;;obj.display=(obj.display=='none'?'block':'none')">点击折叠配置</div>
         <div style="min-height:300px;" id="myControl">
-如果没有商品,自动刷新间隔<input type="number" id="numStartReload" style="width:30px" value="3" min="0">秒  刷新倒计时:<span id="countLeft">N/A</span>
+如果没有商品,自动刷新间隔<input type="number" id="numStartReload" style="width:30px" value="3" min="0">秒  刷新倒计时:<span id="countLeft">N/A</span><br/>
+开始时间:<input type="number" id="idHour" style="width:30px" value="0" min="0" max="23">时<input type="number" id="idMin" style="width:30px" value="0" min="0" max="59">分<input type="number" id="idSec" style="width:30px" value="0" min="0" max="59">秒
 <br/>
 商品1正则表达式:<input type="text" id="autoGoodsName1" style="width:100px" value="" >
 商品1数量:<input type="number" id="autoGoodsNum1" style="width:40px" value="1" min="1">
@@ -119,6 +120,9 @@ function attachControlPanel()
 
     // 初始值
     $('numStartReload').value = localStorage.getItem('iReloadDelay')||4;
+    $('idHour').value = localStorage.getItem('iHour')||0;
+    $('idMin').value = localStorage.getItem('iMin')||0;
+    $('idSec').value = localStorage.getItem('iSec')||0;
     autoSubmit = (localStorage.getItem('AutoSubmit')||1)==1?true:false;
     directCheckout = (localStorage.getItem('DirectCheckout')||1)==1?true:false;
     $('ckAutoSubmit').checked = autoSubmit;
@@ -138,15 +142,22 @@ function attachControlPanel()
     // 刷新函数
     window.countReload = function()
     {
+		var  d = new Date();
+		d.setHours($('idHour').value);
+		d.setMinutes($('idMin').value);
+		d.setSeconds($('idSec').value);
         $('countLeft').innerHTML = window.countNum;
-        if(window.countNum<1){location.reload()};
+        if(window.countNum<1 && (new Date()>d)){location.reload();};
         window.countNum = window.countNum -1;
-    }
+    };
     window.startReload = function()
     {
         var countNum = $('numStartReload').value;
         window.countNum = countNum;
         localStorage.setItem('iReloadDelay',countNum);
+        localStorage.setItem('iHour',$('idHour').value);
+        localStorage.setItem('iMin',$('idMin').value);
+        localStorage.setItem('iSec',$('idSec').value);
         var bReloadState=0;
         if(window.handleStartReload==null)
         {
@@ -172,7 +183,7 @@ function attachControlPanel()
             }
         }
         localStorage.setItem('searchInfo', JSON.stringify(regArr));
-    }
+    };
     window.openNextPage = function()
     {
         var page =  '&page='+$('numPage').value;
@@ -184,14 +195,14 @@ function attachControlPanel()
             s  = s+page;
         }
         window.open( s ,'_blank');
-    }
+    };
     window.chgOpt = function()
     {
         directCheckout = $('ckDirectCheckout').checked ;
         autoSubmit = $('ckAutoSubmit').checked ;
         localStorage.setItem('DirectCheckout',directCheckout?1:0);
-        localStorage.setItem('AutoSubmit',autoSubmit?1:0)
-    }
+        localStorage.setItem('AutoSubmit',autoSubmit?1:0);
+    };
     return true;
 }
 function addSelfFuns()
@@ -214,8 +225,10 @@ function addSelfFuns()
             }
             if( autoSubmit )
             {
-                //console.log("autoCommit theForm.submit"); 
-                setTimeout( function(){document.forms.theForm.submit()},100); // 需要防止重复提交，用定时器
+                //console.log("autoCommit theForm.submit");
+				// 需要防止重复提交，用定时器
+				if( window.handleSubmit != null ){clearInterval(window.handleSubmit);window.handleSubmit=null;}
+                window.handleSubmit = setTimeout( function(){document.forms.theForm.submit();},1); 
             }else{
                 window.open(url , win);
             }
@@ -248,7 +261,7 @@ function autoFindAndSubmit()
             {
                 // 去掉换行
                 let txt = good.txt.replace(/\n/g,'');
-                $('txtBought').value +='['+txt+'],'+item.num
+                $('txtBought').value +='['+txt+'],'+item.num+'\n';
                 document.forms['ECS_FORMBUY'].elements["number"].value= item.num;
                 addToCart(good.goodId); // 调用加入购物车
                 return false;
